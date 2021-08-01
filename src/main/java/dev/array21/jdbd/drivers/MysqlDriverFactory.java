@@ -11,27 +11,58 @@ public class MysqlDriverFactory {
 	private String password;
 	private String database;
 	
+	/**
+	 * Set the MySQL host
+	 * @param host The host to set
+	 * @return The current factory
+	 */
 	public MysqlDriverFactory setHost(String host) {
 		this.host = host;
 		return this;
 	}
 	
+	/**
+	 * Set the MySQL username
+	 * @param username The username to set
+	 * @return The current factory
+	 */
 	public MysqlDriverFactory setUsername(String username) {
 		this.username = username;
 		return this;
 	}
 	
+	/**
+	 * Set the MySQL password
+	 * @param password The password to set
+	 * @return The current factory
+	 */
 	public MysqlDriverFactory setPassword(String password) {
 		this.password = password;
 		return this;
 	}
 	
+	/**
+	 * Set the MySQL database
+	 * @param database The database to set
+	 * @return The current factory
+	 */
 	public MysqlDriverFactory setDatabase(String database) {
 		this.database = database;
 		return this;
 	}
 	
-	public MysqlDriver build() throws IOException, UnsatisfiedLinkError, UnsupportedOperatingSystemException {
+	/**
+	 * Build the MsqlDriver. Throws an IllegalStateException when:
+	 * <ul>
+	 * 	<li> The host is unsert
+	 * 	<li> The database is unset
+	 * </ul>
+	 * @return Return an instance of the MysqlDriver
+	 * @throws IOException When saving the native library failed
+	 * @throws UnsatisfiedLinkError When loading the native library failed
+	 * @throws UnsupportedOperatingSystemException When the current operating system is unsupported
+	 */
+	public MysqlDriver build() throws IOException {
 		if(this.host == null) {
 			throw new IllegalStateException("Host is unset");
 		}

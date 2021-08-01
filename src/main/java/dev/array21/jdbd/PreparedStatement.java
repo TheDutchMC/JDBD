@@ -38,6 +38,10 @@ public class PreparedStatement {
 		return this;
 	}
 	
+	public boolean allBound() {
+		return !this.stmt.contains("?");
+	}
+	
 	public PreparedStatement bind(int pos, int i) {
 		return this.bind(pos, String.valueOf(i));
 	}

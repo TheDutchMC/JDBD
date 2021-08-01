@@ -4,15 +4,15 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-public class UnsupportedOperatingSystemExceptionTest {
-	
+public class UnboundPreparedStatementExceptionTest {
+
 	@Test
 	public void testEmptyConstructor() {
-		assertEquals(null, new UnsupportedOperatingSystemException().getMessage());
+		assertEquals(null, new UnboundPreparedStatementException().getMessage());
 	}
 	
 	@Test
 	public void testMessageConstructor() {
-		assertEquals("foo", new UnsupportedOperatingSystemException("foo").getMessage());
+		assertEquals("foo", new UnboundPreparedStatementException("foo").getMessage());
 	}
 }

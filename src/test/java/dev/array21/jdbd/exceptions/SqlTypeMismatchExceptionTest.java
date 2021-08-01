@@ -5,6 +5,7 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
 public class SqlTypeMismatchExceptionTest {
+	
 	@Test
 	public void testEmptyConstructor() {
 		assertEquals(null, new SqlTypeMismatchException().getMessage());

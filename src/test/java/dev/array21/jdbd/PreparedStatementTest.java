@@ -1,6 +1,8 @@
 package dev.array21.jdbd;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
@@ -64,6 +66,16 @@ public class PreparedStatementTest {
 		pr.bind(0, "foo");
 		
 		assertEquals(pr.getStmt(), "X foo");
+	}
+	
+	@Test
+	public void testAllBound() {
+		PreparedStatement pr = new PreparedStatement("??");
+		assertFalse(pr.allBound());
+		pr.bind(0, "foo");
+		assertFalse(pr.allBound());
+		pr.bind(1, "bar");
+		assertTrue(pr.allBound());
 	}
 	
 	@Test
