@@ -1,0 +1,135 @@
+plugins {
+    id 'java'
+	id 'signing'
+    id 'eclipse'
+    id 'maven-publish'
+    id 'jacoco'    
+}
+
+group = 'dev.array21'
+version = '1.0.0'
+
+sourceCompatibility = 1.11
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+
+	testImplementation 'junit:junit:4.13.2'
+}
+
+task copyLinuxX64(type: Copy) {
+	from "$rootDir/lib/target/x86_64-unknown-linux-gnu/release/libjdbd.so"
+	into "$buildDir/resources/main/x86_64/linux"
+}
+
+task copyWindowsX64(type: Copy) {
+    from "$rootDir/lib/target/x86_64-pc-windows-gnu/release/libjdbd.dll"
+	into "$buildDir/resources/main/x86_64/windows"
+}
+
+task nativeLibraries(type: Jar) {
+    dependsOn('copyLinuxX64')
+    dependsOn('copyWindowsX64')
+}
+
+task javadocJar(type: Jar) {
+    classifier = 'javadoc'
+    from javadoc
+}
+
+task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+publishing {
+	repositories {
+		maven {
+			name = "ossrh"
+			url = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
+			credentials {
+				username = findProperty('ossrhUsername')
+				password = findProperty('ossrhPassword')
+			}
+		}
+	}
+
+	publications {
+    	mavenJava(MavenPublication) {
+      		from components.java
+      		artifact sourcesJar
+      		artifact javadocJar
+
+            artifact nativeLibraries
+      		
+			pom {
+		    	name = 'JDBD'
+		    	artifactId = 'jdbd'
+		    	packaging = 'jar'
+		    	description = 'Java Database Driver'
+		    	url = 'https://github.com/TheDutchMC/JDBD'
+			
+				scm {
+					connection = 'scm:git:git://github.com/TheDutchMC/JDBD.git'
+					developerConnection = 'scm:git:ssh://github.com/TheDutchMC/JDBD.git'
+					url = 'https://github.com/TheDutchMC/JDBD'
+				}
+		
+		    	licenses {
+		      		license {
+		        		name = 'MIT Licence'
+		        		url = 'https://github.com/TheDutchMC/JDBD/blob/master/LICENSE'
+		      		}
+	    		}
+		
+		    	developers {
+		      		developer {
+		        		id = 'tobiasdebruijn'
+		        		name = 'Tobias de Bruijn'
+		        		email = 't.debruijn@array21.dev'
+		      		}
+		    	}
+		    }
+    	}
+	}
+}
+
+signing {
+	if(!System.getProperty('os.name').toLowerCase(Locale.ROOT).contains('windows')) {
+	    sign publishing.publications.mavenJava
+	}
+}
+
+javadoc {
+    options.addStringOption('Xdoclint:none', '-quiet')
+
+    if(JavaVersion.current().isJava9Compatible()) {
+        options.addBooleanOption('html5', true)
+    }
+}
+
+processResources  {
+	duplicatesStrategy = DuplicatesStrategy.INCLUDE
+}
+
+artifacts {
+    archives javadocJar, sourcesJar
+}
+
+test {
+    useJUnit()
+    testLogging.showStandardStreams = true // We show STDOUT and STDERR so we can more easily debug (i.e use System.out.println(); )
+    
+    finalizedBy jacocoTestReport // report is always generated after tests run
+}
+
+jacocoTestReport {
+	reports {
+		html.outputLocation = layout.buildDirectory.dir('jacocoHtml')
+	}
+
+    dependsOn test // tests are required to run before generating the report
+}
