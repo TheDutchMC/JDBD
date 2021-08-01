@@ -57,6 +57,9 @@ public class MysqlDriverFactory {
 	 * 	<li> The host is unsert
 	 * 	<li> The database is unset
 	 * </ul>
+	 * 
+	 * <h2> Thread Safety </h2>
+	 * It is up to the implementer to guarantee that this method is <strong>NOT</strong> called from two threads simultaneously, this can result in Undefined Behaviour
 	 * @return Return an instance of the MysqlDriver
 	 * @throws IOException When saving the native library failed
 	 * @throws UnsatisfiedLinkError When loading the native library failed

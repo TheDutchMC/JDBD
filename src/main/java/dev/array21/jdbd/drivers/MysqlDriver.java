@@ -28,6 +28,9 @@ public class MysqlDriver implements DatabaseDriver {
 	
 	/**
 	 * Create a new MysqlDriver
+	 * 
+	 * <h2> Thread Safety </h2>
+	 * It is up to the implementer to guarantee that this method is <strong>NOT</strong> called from two threads simultaneously, this can result in Undefined Behaviour
 	 * @param host The MySQL host
 	 * @param username The MySQL username
 	 * @param password The MySQL password
