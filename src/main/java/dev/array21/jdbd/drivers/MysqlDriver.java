@@ -138,7 +138,7 @@ public class MysqlDriver implements DatabaseDriver {
 	 * @param errorBuffer The buffer to put errors in
 	 * @return Returns a heap pointer to where the mysql connection pool is stored
 	 */
-	private native long initialize(char[] errorBuffer);
+	private synchronized native long initialize(char[] errorBuffer);
 	
 	/**
 	 * Execute a statement
@@ -146,7 +146,7 @@ public class MysqlDriver implements DatabaseDriver {
 	 * @param preparedStatement The statement to execute, with all params bound
 	 * @return The amount of rows affected
 	 */
-	private native int execute(long ptr, String preparedStatement);
+	private synchronized native int execute(long ptr, String preparedStatement);
 	
 	/**
 	 * Query the database
@@ -154,11 +154,11 @@ public class MysqlDriver implements DatabaseDriver {
 	 * @param preparedStatement The statement to query with, with all params bound
 	 * @return The data returned by the database
 	 */
-	private native SqlRow[] query(long ptr, String preparedStatement);
+	private synchronized native SqlRow[] query(long ptr, String preparedStatement);
 	
 	/**
 	 * Unload the driver. This will destory the mysql connection pool and free it's memory
 	 * @param ptr The heap pointer to where the mysql connection pool is stored
 	 */
-	private native void unload(long ptr);
+	private synchronized native void unload(long ptr);
 }
