@@ -1,5 +1,9 @@
 package dev.array21.jdbd.drivers;
 
+import java.io.IOException;
+
+import dev.array21.jdbd.exceptions.UnsupportedOperatingSystemException;
+
 public class MysqlDriverFactory {
 
 	private String host;
@@ -27,7 +31,7 @@ public class MysqlDriverFactory {
 		return this;
 	}
 	
-	public MysqlDriver build() {
+	public MysqlDriver build() throws IOException, UnsatisfiedLinkError, UnsupportedOperatingSystemException {
 		if(this.host == null) {
 			throw new IllegalStateException("Host is unset");
 		}

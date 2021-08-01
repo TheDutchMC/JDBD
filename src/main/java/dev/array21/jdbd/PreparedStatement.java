@@ -23,7 +23,7 @@ public class PreparedStatement {
 		this.bindingOffsets = bindingOffsets.stream().mapToInt(i->i).toArray();
 	}
 	
-	protected String getStmt() {
+	public String getStmt() {
 		return this.stmt;
 	}
 	

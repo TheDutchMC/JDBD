@@ -1,4 +1,4 @@
-package dev.array21.jdbd;
+package dev.array21.jdbd.util;
 
 public class Pair<A, B> {
 	private A a;

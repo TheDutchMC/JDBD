@@ -2,8 +2,9 @@ package dev.array21.jdbd.datatypes;
 
 import java.util.HashMap;
 
-import dev.array21.jdbd.Pair;
 import dev.array21.jdbd.annotations.Nullable;
+import dev.array21.jdbd.exceptions.SqlTypeMismatchException;
+import dev.array21.jdbd.util.Pair;
 
 public class SqlRow {
 	private final HashMap<String, Pair<Object, Class<?>>> columns = new HashMap<>();
@@ -46,12 +47,13 @@ public class SqlRow {
 	@Nullable
 	private Object getAndValidate(String column, Class<?> clazz) {
 		Pair<Object, Class<?>> pair = columns.get(column);
+				
 		if(pair == null) {
 			return null;
 		}
 		
-		if(pair.getB() != clazz.getClass()) {
-			throw new IllegalStateException(String.format("Column '%s' was requested as String, but is %s", column, pair.getB().toString()));
+		if(pair.getB() != clazz) {
+			throw new SqlTypeMismatchException(String.format("Column '%s' was requested as %s, but is %s", column, clazz.toString(), pair.getB().toString()));
 		}
 		
 		return pair.getA();
