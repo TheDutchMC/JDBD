@@ -75,6 +75,7 @@ public class MysqlDriverFactory {
 		}
 		
 		MysqlDriver driver = new MysqlDriver(this.host, this.username, this.password, this.database);
+		driver.loadDriver();
 		return driver;
 	}
 	

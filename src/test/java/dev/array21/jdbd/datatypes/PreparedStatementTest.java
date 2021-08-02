@@ -1,4 +1,4 @@
-package dev.array21.jdbd;
+package dev.array21.jdbd.datatypes;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -40,6 +40,15 @@ public class PreparedStatementTest {
 		pr.bind(1, false);
 		
 		assertEquals(pr.getStmt(), "BLABLA true BLABLA false BLABLA");
+	}
+	
+	@Test
+	public void bindLong() {
+		PreparedStatement pr = new PreparedStatement("BLABLA ? BLABLA ? BLABLA");
+		pr.bind(0, 1L);
+		pr.bind(1, 2L);
+		
+		assertEquals(pr.getStmt(), "BLABLA 1 BLABLA 2 BLABLA");
 	}
 	
 	@Test

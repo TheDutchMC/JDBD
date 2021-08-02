@@ -5,6 +5,11 @@ use mysql::{Pool, Params};
 use super::set_error;
 use mysql::prelude::Queryable;
 
+/**
+ * - Class:      MysqlDriver
+ * - Method:     execute
+ * - Signature:  `(JLjava/lang/String;)I`
+ */
 #[no_mangle]
 pub extern "system" fn Java_dev_array21_jdbd_drivers_MysqlDriver_execute__JLjava_0002flang_0002fString_2(env: JNIEnv, obj: JObject, pool_ptr: jlong, stmt: JString) -> jint {
     let pool_ptr = pool_ptr as *mut Pool;

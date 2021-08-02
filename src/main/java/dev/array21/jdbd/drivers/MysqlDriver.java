@@ -2,11 +2,13 @@ package dev.array21.jdbd.drivers;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.SQLException;
 
 import dev.array21.jdbd.DatabaseDriver;
-import dev.array21.jdbd.PreparedStatement;
+import dev.array21.jdbd.datatypes.PreparedStatement;
 import dev.array21.jdbd.datatypes.SqlRow;
 import dev.array21.jdbd.exceptions.DriverUnloadedException;
+import dev.array21.jdbd.exceptions.SqlException;
 import dev.array21.jdbd.exceptions.UnboundPreparedStatementException;
 import dev.array21.jdbd.exceptions.UnsupportedOperatingSystemException;
 import dev.array21.jdbd.util.LibraryUtils;
@@ -24,12 +26,11 @@ public class MysqlDriver implements DatabaseDriver {
 	private String database;
 	// END
 	
-	public MysqlDriver(long l) {
-		
-	}
-	
 	/**
-	 * This value should <strong>NEVER</strong> altered, except by:
+	 * Pointer to heap memory where the MySQL connection pool lives.
+	 * 
+	 * <h2> SAFETY </h2>
+	 * This value should <strong>NEVER</strong> be altered, except by:
 	 * <ul>
 	 * 	<li> {@link MysqlDriver#MysqlDriver(String, String, String, String) }
 	 * 	<li> {@link MysqlDriver#unload() }
@@ -51,23 +52,30 @@ public class MysqlDriver implements DatabaseDriver {
 	 * @param username The MySQL username
 	 * @param password The MySQL password
 	 * @param database The MySQL database
-	 * @throws IOException When saving the native library failed
-	 * @throws UnsatisfiedLinkError When loading the native library failed
-	 * @throws UnsupportedOperatingSystemException When the current operating system is unsupported
 	 */
-	protected MysqlDriver(String host, String username, String password, String database) throws IOException {
+	protected MysqlDriver(String host, String username, String password, String database) {
 		this.host = host;
 		this.username = username;
 		this.password = password;
 		this.database = database;
-		
+	}
+	
+	/**
+	 * Load the native driver
+	 * @throws IOException When saving the native library failed
+	 * @throws UnsatisfiedLinkError When loading the native library failed
+	 * @throws UnsupportedOperatingSystemException When the current operating system is unsupported
+	 * @throws RuntimeException When {@link MysqlDriver#initialize()} returns an error
+	 */
+	public void loadDriver() throws IOException {
 		loadLibrary();
 		
 		this.ptr = initialize();
-		this.ptrValid = true;
 		if(this.ptr == 0) {
 			throw new RuntimeException("Failed to load driver: " + String.valueOf(this.errorBuffer));
 		}
+		
+		this.ptrValid = true;
 	}
 	
 	/**
@@ -91,7 +99,7 @@ public class MysqlDriver implements DatabaseDriver {
 	 * @throws IllegalStateException When the native library is not loaded
 	 * @throws DriverUnloadedException When {@link #unload()} has already been called
 	 */
-	private void checkValid(){
+	private void checkValid() {
 		if(!LIBRARY_LOADED) {
 			throw new IllegalStateException("libjdbd_mysql is not loaded");
 		}
@@ -106,16 +114,25 @@ public class MysqlDriver implements DatabaseDriver {
 	 * @throws IllegalStateException When the native library is not loaded
 	 * @throws DriverUnloadedException When {@link #unload()} has already been called
 	 * @throws UnboundPreparedStatementException When not all parameters in the statement have been bound
+	 * @throws SQLException
 	 */
 	@Override
-	public synchronized SqlRow[] query(PreparedStatement statement) {
+	public synchronized SqlRow[] query(PreparedStatement statement) throws SqlException {
 		checkValid();
 		
 		if(!statement.allBound()) {
 			throw new UnboundPreparedStatementException("Not all paramaters are bound");
 		}
 		
-		return this.query(this.ptr, statement.getStmt());
+		SqlRow[] resultSet = this.query(this.ptr, statement.getStmt());
+		if(resultSet == null) {
+			String buffer = this.errorBuffer;
+			this.errorBuffer = "";
+			
+			throw new SqlException(buffer);
+		}
+		
+		return resultSet;
 	}
 
 	/**
@@ -126,14 +143,20 @@ public class MysqlDriver implements DatabaseDriver {
 	 * @throws UnboundPreparedStatementException When not all parameters in the statement have been bound
 	 */
 	@Override
-	public synchronized void execute(PreparedStatement statement) {
+	public synchronized void execute(PreparedStatement statement) throws SqlException {
 		checkValid();
 		
 		if(!statement.allBound()) {
 			throw new UnboundPreparedStatementException("Not all paramaters are bound");
 		}
 		
-		this.execute(this.ptr, statement.getStmt());
+		int status = this.execute(this.ptr, statement.getStmt());
+		if(status != 0) {
+			String buffer = this.errorBuffer;
+			this.errorBuffer = "";
+			
+			throw new SqlException(buffer);
+		}
 	}
 	
 	/**

@@ -47,6 +47,11 @@ macro_rules! match_nullptr {
     }
 }
 
+/**
+ * - Class:      MysqlDriver
+ * - Method:     initialize
+ * - Signature:  `()J`
+ */
 #[no_mangle]
 pub extern "system" fn Java_dev_array21_jdbd_drivers_MysqlDriver_initialize(env: JNIEnv, obj: JObject) -> jlong {
     let host = match_nullptr!(get_string_field(env, obj, "host"));

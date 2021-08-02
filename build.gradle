@@ -33,7 +33,7 @@ task copyMysqlWindowsX64(type: Copy) {
 	into "$buildDir/resources/main/x86_64/windows"
 }
 
-task nativeLibraries(type: Jar) {
+task nativeLibraries(type: Zip) {
     dependsOn('copyMysqlLinuxX64')
     dependsOn('copyMysqlWindowsX64')
 }
@@ -46,6 +46,10 @@ task javadocJar(type: Jar) {
 task sourcesJar(type: Jar) {
     classifier = 'sources'
     from sourceSets.main.allSource
+}
+
+publish {
+	dependsOn('nativeLibraries')
 }
 
 publishing {
@@ -65,8 +69,6 @@ publishing {
       		from components.java
       		artifact sourcesJar
       		artifact javadocJar
-
-            artifact nativeLibraries
       		
 			pom {
 		    	name = 'JDBD'

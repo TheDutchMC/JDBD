@@ -1,4 +1,4 @@
-package dev.array21.jdbd;
+package dev.array21.jdbd.datatypes;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,5 +48,9 @@ public class PreparedStatement {
 	
 	public PreparedStatement bind(int pos, boolean b) {
 		return this.bind(pos, String.valueOf(b));
+	}
+	
+	public PreparedStatement bind(int pos, long l) {
+		return this.bind(pos, String.valueOf(l));
 	}
 }

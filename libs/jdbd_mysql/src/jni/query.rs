@@ -32,6 +32,11 @@ macro_rules! find_class {
     }
 }
 
+/**
+ * - Class:      MysqlDriver
+ * - Method:     query
+ * - Signature:  `(JLjava/lang/String;)[Ldev/array21/jdbd/datatypes/SqlRow;`
+ */
 #[no_mangle]
 pub extern "system" fn Java_dev_array21_jdbd_drivers_MysqlDriver_query__JLjava_0002flang_0002fString_2(env: JNIEnv, obj: JObject, pool_ptr: jlong, stmt: JString) -> jobjectArray {
     let pool_ptr = pool_ptr as *mut Pool;
