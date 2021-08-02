@@ -16,11 +16,27 @@ public class MysqlDriver implements DatabaseDriver {
 
 	private static boolean LIBRARY_LOADED = false;
 
+	// DO NOT RENAME
+	private String errorBuffer;
 	private String host;
 	private String username;
 	private String password;
 	private String database;
+	// END
 	
+	public MysqlDriver(long l) {
+		
+	}
+	
+	/**
+	 * This value should <strong>NEVER</strong> altered, except by:
+	 * <ul>
+	 * 	<li> {@link MysqlDriver#MysqlDriver(String, String, String, String) }
+	 * 	<li> {@link MysqlDriver#unload() }
+	 * </ul>
+	 * 
+	 * Otherwhise altering this variable is <strong>guaranteed</strong> to result in Undefined Behaviour, and likely a segmentation fault
+	 */
 	private long ptr;
 	private volatile boolean ptrValid = false;
 	
@@ -47,10 +63,10 @@ public class MysqlDriver implements DatabaseDriver {
 		
 		loadLibrary();
 		
-		char[] errorBuffer = new char[1024];
-		this.ptr = initialize(errorBuffer);
+		this.ptr = initialize();
+		this.ptrValid = true;
 		if(this.ptr == 0) {
-			throw new RuntimeException("Failed to load driver: " + String.valueOf(errorBuffer));
+			throw new RuntimeException("Failed to load driver: " + String.valueOf(this.errorBuffer));
 		}
 	}
 	
@@ -62,7 +78,7 @@ public class MysqlDriver implements DatabaseDriver {
 	 */
 	private void loadLibrary() throws IOException {
 		if(!LIBRARY_LOADED) {
-			String path = LibraryUtils.getLibraryPath("libjdbd-mysql");
+			String path = LibraryUtils.getLibraryPath("libjdbd_mysql");
 			Pair<File, File> filePair = LibraryUtils.saveLibrary(path);
 			System.loadLibrary(filePair.getB().getAbsolutePath());
 			
@@ -77,7 +93,7 @@ public class MysqlDriver implements DatabaseDriver {
 	 */
 	private void checkValid(){
 		if(!LIBRARY_LOADED) {
-			throw new IllegalStateException("libjdbd-mysql is not loaded");
+			throw new IllegalStateException("libjdbd_mysql is not loaded");
 		}
 		
 		if(!this.ptrValid) {
@@ -135,16 +151,15 @@ public class MysqlDriver implements DatabaseDriver {
 
 	/**
 	 * Initialize the driver
-	 * @param errorBuffer The buffer to put errors in
 	 * @return Returns a heap pointer to where the mysql connection pool is stored
 	 */
-	private synchronized native long initialize(char[] errorBuffer);
+	private synchronized native long initialize();
 	
 	/**
 	 * Execute a statement
 	 * @param ptr The heap pointer to where the mysql connection pool is stored
 	 * @param preparedStatement The statement to execute, with all params bound
-	 * @return The amount of rows affected
+	 * @return -1 if an error occurred. 0 if everything is OK.
 	 */
 	private synchronized native int execute(long ptr, String preparedStatement);
 	
@@ -152,7 +167,7 @@ public class MysqlDriver implements DatabaseDriver {
 	 * Query the database
 	 * @param ptr The heap pointer to where the mysql connection pool is stored
 	 * @param preparedStatement The statement to query with, with all params bound
-	 * @return The data returned by the database
+	 * @return The data returned by the database, or null if an error occurred
 	 */
 	private synchronized native SqlRow[] query(long ptr, String preparedStatement);
 	

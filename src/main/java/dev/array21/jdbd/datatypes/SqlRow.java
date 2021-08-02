@@ -25,18 +25,13 @@ public class SqlRow {
 	}
 	
 	@Nullable
-	public Integer getInt(String column) {
-		return (Integer) getAndValidate(column, Integer.class);
+	public Long getLong(String column) {
+		return (Long) getAndValidate(column, Long.class);
 	}
 	
 	@Nullable
 	public Double getDouble(String column) {
 		return (Double) getAndValidate(column, Double.class);
-	}
-	
-	@Nullable
-	public Boolean getBoolean(String column) {
-		return (Boolean) getAndValidate(column, Boolean.class);
 	}
 	
 	@Nullable

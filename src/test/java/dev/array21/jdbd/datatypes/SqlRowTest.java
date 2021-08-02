@@ -17,8 +17,8 @@ public class SqlRowTest {
 	public void setup() {
 		this.row = new SqlRow(
 				new String[] { "a", "b", "c", "d", "e" },
-				new Object[] { "baz", 1, 2.5d, false, new Byte[] { 0x0 }},
-				new Class<?>[] { String.class, Integer.class, Double.class, Boolean.class, Byte[].class });
+				new Object[] { "baz", 1l, 2.5d, false, new Byte[] { 0x0 }},
+				new Class<?>[] { String.class, Long.class, Double.class, Boolean.class, Byte[].class });
 	}
 	
 	@Test(expected = IllegalArgumentException.class)
@@ -37,18 +37,13 @@ public class SqlRowTest {
 	}
 	
 	@Test
-	public void testGetInt() {
-		assertEquals(Integer.valueOf(1), this.row.getInt("b"));
+	public void testGetLong() {
+		assertEquals(Long.valueOf(1), this.row.getLong("b"));
 	}
 	
 	@Test
 	public void testGetDouble() {
 		assertEquals(Double.valueOf(2.5d), this.row.getDouble("c"));
-	}
-	
-	@Test
-	public void testGetBoolean() {
-		assertEquals(Boolean.valueOf(false), this.row.getBoolean("d"));
 	}
 	
 	@Test
@@ -58,7 +53,7 @@ public class SqlRowTest {
 	
 	@Test
 	public void testGetNonexistentColumn() {
-		assertNull(this.row.getBoolean("z"));
+		assertNull(this.row.getString("z"));
 	}
 	
 	@Test(expected = SqlTypeMismatchException.class)
