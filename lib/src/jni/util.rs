@@ -48,6 +48,17 @@ macro_rules! unwrap_nullptr {
     }
 }
 
+/// Unwrap or return 0
+#[macro_export]
+macro_rules! unwrap_zero {
+    ($i:expr) => {
+        match $i {
+            Ok(i) => i,
+            Err(_) => return 0
+        }
+    }
+}
+
 /// Get the value of a String Field from the provided Object
 pub fn get_string_field(env: JNIEnv, obj: JObject, field_name: &'static str) -> Result<Option<String>, ()> {
     let field = match env.get_field(obj, &field_name, "Ljava/lang/String;") {

@@ -1,29 +1,18 @@
-use jni::sys::{jobjectArray, jlong};
-use jni::objects::{JObject, JString, JClass};
-use mysql::{Pool, Params, Row};
-use crate::jni::util::{set_error, Java};
 use jni::JNIEnv;
+use jni::objects::{JObject, JString, JClass};
+use jni::sys::{jlong, jobjectArray};
+use postgres::Client;
+use crate::jni::util::{set_error, Java};
 use std::ptr::null_mut;
-use mysql::prelude::Queryable;
-use mysql::consts::ColumnType;
 use crate::unwrap_nullptr;
 
 /**
- * - Class:      MysqlDriver
+ * - Class:      PostgreSqlDriver
  * - Method:     queryNative
  * - Signature:  `(JLjava/lang/String;)[Ldev/array21/jdbd/datatypes/SqlRow;`
  */
 #[no_mangle]
-pub extern "system" fn Java_dev_array21_jdbd_drivers_MysqlDriver_queryNative(env: JNIEnv, obj: JObject<'_>, pool_ptr: jlong, stmt: JString) -> jobjectArray {
-    let pool_ptr = pool_ptr as *mut Pool;
-    let mut conn = match unsafe { &*pool_ptr }.get_conn() {
-        Ok(c) => c,
-        Err(e) => {
-            set_error(env, obj, &format!("Failed to create MySQL connection: {:?}", e));
-            return null_mut();
-        }
-    };
-
+pub extern "system" fn Java_dev_array21_jdbd_drivers_PostgreSqlDriver_queryNative(env: JNIEnv, obj: JObject<'_>, client_ptr: jlong, stmt: JString) -> jobjectArray {
     let stmt = match env.get_string(stmt) {
         Ok(s) => String::from(s),
         Err(e) => {
@@ -32,13 +21,16 @@ pub extern "system" fn Java_dev_array21_jdbd_drivers_MysqlDriver_queryNative(env
         }
     };
 
-    let result = match conn.exec::<Row, &str, Params>(&stmt, Params::Empty) {
+    let mut client = unsafe { Box::from_raw(client_ptr as *mut Client) };
+    let result = match client.query(&*stmt, &[]) {
         Ok(r) => r,
         Err(e) => {
             set_error(env, obj, &format!("Failed to execute stmt: {:?}", e));
             return null_mut();
         }
     };
+
+    Box::into_raw(client);
 
     // Vec of dev.array21.jdbd.datatypes.SqlRow
     let mut sqlrows = Vec::new();
@@ -51,12 +43,13 @@ pub extern "system" fn Java_dev_array21_jdbd_drivers_MysqlDriver_queryNative(env
         let mut names: Vec<String> = Vec::new();
 
         for col in row.columns().iter() {
-            let name = col.name_str().to_string();
-            match col.column_type() {
-                ColumnType::MYSQL_TYPE_STRING | ColumnType::MYSQL_TYPE_VAR_STRING | ColumnType::MYSQL_TYPE_VARCHAR => {
-                    let v: Option<String> = row.get(&*name).unwrap();
+            let name = col.name();
+
+            match col.type_().name() {
+                "text" | "varchar" | "bytea" => {
+                    let v: Option<String> = row.get(&name);
                     classes.push(unwrap_nullptr!(env, obj, Java::String(env)));
-                    names.push(name);
+                    names.push(name.to_string());
                     match v {
                         Some(v) => {
                             let string = unwrap_nullptr!(env, obj, Java::new_String(env, v));
@@ -65,10 +58,10 @@ pub extern "system" fn Java_dev_array21_jdbd_drivers_MysqlDriver_queryNative(env
                         None => objects.push(JObject::null())
                     }
                 },
-                ColumnType::MYSQL_TYPE_INT24 | ColumnType::MYSQL_TYPE_LONG | ColumnType::MYSQL_TYPE_LONGLONG => {
-                    let v: Option<i64> = row.get(&*name).unwrap();
+                "int8" | "int2" | "int4" | "numeric" => {
+                    let v: Option<i64> = row.get(&name);
                     classes.push(unwrap_nullptr!(env, obj, Java::Long(env)));
-                    names.push(name);
+                    names.push(name.to_string());
                     match v {
                         Some(v) => {
                             let long = unwrap_nullptr!(env, obj, Java::new_Long(env, v));
@@ -77,10 +70,10 @@ pub extern "system" fn Java_dev_array21_jdbd_drivers_MysqlDriver_queryNative(env
                         None => objects.push(JObject::null())
                     }
                 },
-                ColumnType::MYSQL_TYPE_DOUBLE | ColumnType::MYSQL_TYPE_FLOAT => {
-                    let v: Option<f64> = row.get(&*name).unwrap();
+                "float4" | "float8" => {
+                    let v: Option<f64> = row.get(&*name);
                     classes.push(unwrap_nullptr!(env, obj, Java::Double(env)));
-                    names.push(name);
+                    names.push(name.to_string());
                     match v {
                         Some(v) => {
                             let double = unwrap_nullptr!(env, obj, Java::new_Double(env, v));
@@ -89,10 +82,10 @@ pub extern "system" fn Java_dev_array21_jdbd_drivers_MysqlDriver_queryNative(env
                         None => objects.push(JObject::null())
                     }
                 },
-                ColumnType::MYSQL_TYPE_BLOB | ColumnType::MYSQL_TYPE_LONG_BLOB | ColumnType::MYSQL_TYPE_MEDIUM_BLOB | ColumnType::MYSQL_TYPE_TINY_BLOB => {
-                    let v: Option<Vec<u8>> = row.get(&*name).unwrap();
+                "_bytea" => {
+                    let v: Option<Vec<u8>> = row.get(&*name);
                     classes.push(unwrap_nullptr!(env, obj, Java::Byte_array(env)));
-                    names.push(name);
+                    names.push(name.to_string());
                     match v {
                         Some(v) => {
                             let byte_array = unwrap_nullptr!(env, obj, Java::new_Byte_array_u8(env, v));
@@ -100,7 +93,7 @@ pub extern "system" fn Java_dev_array21_jdbd_drivers_MysqlDriver_queryNative(env
                         },
                         None => objects.push(JObject::null())
                     }
-                }
+                },
                 _ => unimplemented!()
             }
         }
