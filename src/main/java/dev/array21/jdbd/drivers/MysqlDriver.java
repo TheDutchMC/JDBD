@@ -55,7 +55,7 @@ public class MysqlDriver implements DatabaseDriver {
 	 */
 	protected MysqlDriver(String host, String username, String password, String database) {
 		this.host = host;
-		this.username = username;
+		this.username = username;		
 		this.password = password;
 		this.database = database;
 	}
@@ -70,7 +70,7 @@ public class MysqlDriver implements DatabaseDriver {
 	public void loadDriver() throws IOException {
 		loadLibrary();
 		
-		this.ptr = initialize();
+		this.ptr = initializeNative();
 		if(this.ptr == 0) {
 			throw new RuntimeException("Failed to load driver: " + String.valueOf(this.errorBuffer));
 		}
@@ -88,8 +88,7 @@ public class MysqlDriver implements DatabaseDriver {
 		if(!LIBRARY_LOADED) {
 			String path = LibraryUtils.getLibraryPath("libjdbd_mysql");
 			Pair<File, File> filePair = LibraryUtils.saveLibrary(path);
-			System.loadLibrary(filePair.getB().getAbsolutePath());
-			
+			System.load(filePair.getB().getAbsolutePath());
 			LIBRARY_LOADED = true;
 		}
 	}
@@ -109,6 +108,18 @@ public class MysqlDriver implements DatabaseDriver {
 		}
 	}
 	
+	/**
+	 * Check if the driver is loaded. When:
+	 * <ul>
+	 * 	<li> The library is loaded
+	 * 	<li> The driver has been initialized
+	 * </ul>
+	 * @return True if it is loaded, false otherwhise
+	 */
+	public boolean isLoaded() {
+		return LIBRARY_LOADED && this.ptrValid;
+	}
+	
 	/** Query the MySQL database
 	 * @param statement The statement to query with
 	 * @throws IllegalStateException When the native library is not loaded
@@ -124,7 +135,7 @@ public class MysqlDriver implements DatabaseDriver {
 			throw new UnboundPreparedStatementException("Not all paramaters are bound");
 		}
 		
-		SqlRow[] resultSet = this.query(this.ptr, statement.getStmt());
+		SqlRow[] resultSet = this.queryNative(this.ptr, statement.getStmt());
 		if(resultSet == null) {
 			String buffer = this.errorBuffer;
 			this.errorBuffer = "";
@@ -150,7 +161,7 @@ public class MysqlDriver implements DatabaseDriver {
 			throw new UnboundPreparedStatementException("Not all paramaters are bound");
 		}
 		
-		int status = this.execute(this.ptr, statement.getStmt());
+		int status = this.executeNative(this.ptr, statement.getStmt());
 		if(status != 0) {
 			String buffer = this.errorBuffer;
 			this.errorBuffer = "";
@@ -168,7 +179,7 @@ public class MysqlDriver implements DatabaseDriver {
 	public synchronized void unload() {
 		checkValid();
 		this.ptrValid = false;
-		this.unload(this.ptr);
+		this.unloadNative(this.ptr);
 		this.ptr = 0;
 	}
 
@@ -176,7 +187,7 @@ public class MysqlDriver implements DatabaseDriver {
 	 * Initialize the driver
 	 * @return Returns a heap pointer to where the mysql connection pool is stored
 	 */
-	private synchronized native long initialize();
+	private synchronized native long initializeNative();
 	
 	/**
 	 * Execute a statement
@@ -184,7 +195,7 @@ public class MysqlDriver implements DatabaseDriver {
 	 * @param preparedStatement The statement to execute, with all params bound
 	 * @return -1 if an error occurred. 0 if everything is OK.
 	 */
-	private synchronized native int execute(long ptr, String preparedStatement);
+	private synchronized native int executeNative(long ptr, String preparedStatement);
 	
 	/**
 	 * Query the database
@@ -192,11 +203,11 @@ public class MysqlDriver implements DatabaseDriver {
 	 * @param preparedStatement The statement to query with, with all params bound
 	 * @return The data returned by the database, or null if an error occurred
 	 */
-	private synchronized native SqlRow[] query(long ptr, String preparedStatement);
+	private synchronized native SqlRow[] queryNative(long ptr, String preparedStatement);
 	
 	/**
 	 * Unload the driver. This will destory the mysql connection pool and free it's memory
 	 * @param ptr The heap pointer to where the mysql connection pool is stored
 	 */
-	private synchronized native void unload(long ptr);
+	private synchronized native void unloadNative(long ptr);
 }

@@ -6,7 +6,6 @@ use jni::JNIEnv;
 use std::ptr::null_mut;
 use mysql::prelude::Queryable;
 use mysql::consts::ColumnType;
-use jni::signature::JavaType;
 
 macro_rules! to_jstring {
     ($env:expr, $obj:expr, $str:expr) => {
@@ -38,7 +37,7 @@ macro_rules! find_class {
  * - Signature:  `(JLjava/lang/String;)[Ldev/array21/jdbd/datatypes/SqlRow;`
  */
 #[no_mangle]
-pub extern "system" fn Java_dev_array21_jdbd_drivers_MysqlDriver_query__JLjava_0002flang_0002fString_2(env: JNIEnv, obj: JObject, pool_ptr: jlong, stmt: JString) -> jobjectArray {
+pub extern "system" fn Java_dev_array21_jdbd_drivers_MysqlDriver_queryNative(env: JNIEnv, obj: JObject, pool_ptr: jlong, stmt: JString) -> jobjectArray {
     let pool_ptr = pool_ptr as *mut Pool;
     let mut conn = match unsafe { &*pool_ptr }.get_conn() {
         Ok(c) => c,
@@ -78,33 +77,20 @@ pub extern "system" fn Java_dev_array21_jdbd_drivers_MysqlDriver_query__JLjava_0
     let double_class = find_class!(env, obj, "java/lang/Double");
     let byte_class = find_class!(env, obj, "java/lang/Byte");
     let byte_array_class = {
-        let class_class = find_class!(env, obj, "java/lang/Class");
-        let array_type_method = match env.get_static_method_id(class_class, "arrayType", "Ljava/lang/Class") {
-            Ok(atm) => atm,
+        let obj_arr = match env.new_object_array(0, byte_class, JObject::null()) {
+            Ok(oa) => oa,
             Err(e) => {
-                set_error(env, obj, &format!("Failed to get static method ID for java.lang.Class#arrayType(): {:?}", e));
+                set_error(env, obj, &format!("Failed to create new java.lang.Byte[]: {:?}", e));
                 return null_mut();
             }
         };
-
-        let byte_array_class_jvalue = match env.call_static_method_unchecked(byte_class, array_type_method, JavaType::Object("Ljava/lang/Class".to_string()), &[]) {
-            Ok(bac) => bac,
-            Err(e) => {
-                set_error(env, obj, &format!("Failed to call method arrayType() on java.lang.Byte: {:?}", e));
-                return null_mut();
-            }
-        };
-
-        let byte_array_class_jobject = match byte_array_class_jvalue.l() {
+        match env.get_object_class(obj_arr) {
             Ok(c) => c,
             Err(e) => {
-                set_error(env, obj, &format!("Failed to convert java.lang.Byte[] class from JValue to JObject: {:?}", e));
+                set_error(env, obj, &format!("Failed to get class from java.lang.Byte[]: {:?}", e));
                 return null_mut();
             }
-        };
-
-        let byte_array_class = JClass::from(byte_array_class_jobject);
-        byte_array_class
+        }
     };
 
     let mut row_index = 0;
@@ -215,7 +201,7 @@ pub extern "system" fn Java_dev_array21_jdbd_drivers_MysqlDriver_query__JLjava_0
             }
         };
 
-        let objs_arr = match env.new_object_array(objects.len() as i32, find_class!(env, obj, "Ljava/lang/Object"), JObject::null()) {
+        let objs_arr = match env.new_object_array(objects.len() as i32, find_class!(env, obj, "java/lang/Object"), JObject::null()) {
             Ok(a) => a,
             Err(e) => {
                 set_error(env, obj, &format!("Failed to create new java.lang.Object[]: {:?}", e));
@@ -223,7 +209,7 @@ pub extern "system" fn Java_dev_array21_jdbd_drivers_MysqlDriver_query__JLjava_0
             }
         };
 
-        let classes_arr = match env.new_object_array(classes.len() as i32, find_class!(env, obj, "Ljava/lang/Class"), JObject::null()) {
+        let classes_arr = match env.new_object_array(classes.len() as i32, find_class!(env, obj, "java/lang/Class"), JObject::null()) {
             Ok(a) => a,
             Err(e) => {
                 set_error(env, obj, &format!("Failed to create new java.lang.Class[]: {:?}", e));
@@ -260,7 +246,7 @@ pub extern "system" fn Java_dev_array21_jdbd_drivers_MysqlDriver_query__JLjava_0
             index +=1;
         }
 
-        let sql_row = match env.new_object(sqlrow_class, "[Ljava/lang/String;[Ljava/lang/Object;[Ljava/lang/Class", &[JValue::Object(names_arr.into()), JValue::Object(objs_arr.into()), JValue::Object(classes_arr.into())]) {
+        let sql_row = match env.new_object(sqlrow_class, "([Ljava/lang/String;[Ljava/lang/Object;[Ljava/lang/Class;)V", &[JValue::Object(names_arr.into()), JValue::Object(objs_arr.into()), JValue::Object(classes_arr.into())]) {
             Ok(r) => r,
             Err(e) => {
                 set_error(env, obj, &format!("Failed to create new SqlRow object: {:?}", e));

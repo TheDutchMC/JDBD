@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.regex.Pattern;
 
 import dev.array21.jdbd.exceptions.UnsupportedOperatingSystemException;
@@ -30,8 +31,11 @@ public class LibraryUtils {
 		String[] nameParts = path.split(Pattern.quote("/"));
 		String libName = nameParts[nameParts.length -1];
 		
+		String[] libNameParts = libName.split(Pattern.quote("."));
+		String libNameWithoutExtension = String.join("", Arrays.copyOfRange(libNameParts, 0, libNameParts.length -1));
+				
 		URL url = LibraryUtils.class.getResource(path);
-		File tmpDir = Files.createTempDirectory("jdbd-" + libName).toFile();
+		File tmpDir = Files.createTempDirectory("jdbd" + libNameWithoutExtension).toFile();
 		tmpDir.deleteOnExit();
 		
 		File tmpFile = new File(tmpDir, libName);

@@ -11,7 +11,7 @@ use mysql::prelude::Queryable;
  * - Signature:  `(JLjava/lang/String;)I`
  */
 #[no_mangle]
-pub extern "system" fn Java_dev_array21_jdbd_drivers_MysqlDriver_execute__JLjava_0002flang_0002fString_2(env: JNIEnv, obj: JObject, pool_ptr: jlong, stmt: JString) -> jint {
+pub extern "system" fn Java_dev_array21_jdbd_drivers_MysqlDriver_executeNative(env: JNIEnv, obj: JObject, pool_ptr: jlong, stmt: JString) -> jint {
     let pool_ptr = pool_ptr as *mut Pool;
     let mut conn = match unsafe { &*pool_ptr }.get_conn() {
         Ok(c) => c,
