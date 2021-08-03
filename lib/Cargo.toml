@@ -1,5 +1,5 @@
 [package]
-name = "jdbd_mysql"
+name = "jdbd"
 version = "0.1.0"
 edition = "2018"
 

@@ -1,20 +1,20 @@
-.PHONY: mysql build publish test
+.PHONY: lib build publish test
 all: build
 
 CARGO=cargo
 GRADLE=./gradlew
 
-mysql: libs/jdbd_mysql/target/x86_64-unknown-linux-gnu/release/libjdbd_mysql.so libs/jdbd_mysql/target/x86_64-pc-windows-gnu/release/libjdbd_mysql.dll
+lib: lib/target/x86_64-unknown-linux-gnu/release/libjdbd.so libs/target/x86_64-pc-windows-gnu/release/libjdbd.dll
 
-MYSQL_SRC := $(shell find libs/jdbd_mysql -type f -name '*.rs')
-libs/jdbd_mysql/target/x86_64-unknown-linux-gnu/release/libjdbd_mysql.so: ${MYSQL_SRC}
-	cd libs/jdbd_mysql; \
+MYSQL_SRC := $(shell find lib/ -type f -name '*.rs')
+lib/target/x86_64-unknown-linux-gnu/release/libjdbd.so: ${MYSQL_SRC}
+	cd lib/; \
 		${CARGO} build --target x86_64-unknown-linux-gnu --release
 
-libs/jdbd_mysql/target/x86_64-pc-windows-gnu/release/libjdbd_mysql.dll: ${MYSQL_SRC}
-	cd libs/jdbd_mysql; \
+lib/target/x86_64-pc-windows-gnu/release/libjdbd_mysql.dll: ${MYSQL_SRC}
+	cd lib/; \
 		${CARGO} build --target x86_64-pc-windows-gnu --release
-	cp libs/jdbd_mysql/target/x86_64-pc-windows-gnu/release/jdbd_mysql.dll libs/jdbd_mysql/target/x86_64-pc-windows-gnu/release/libjdbd_mysql.dll
+	cp lib/target/x86_64-pc-windows-gnu/release/jdbd.dll lib/target/x86_64-pc-windows-gnu/release/libjdbd.dll
 
 JAVA_SRC := $(shell find src/ -type f -name '*.java')
 build: mysql ${JAVA_SRC}

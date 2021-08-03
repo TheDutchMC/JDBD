@@ -23,19 +23,19 @@ jar {
 	dependsOn('nativeLibraries')
 }
 
-task copyMysqlLinuxX64(type: Copy) {
-	from "$rootDir/libs/jdbd_mysql/target/x86_64-unknown-linux-gnu/release/libjdbd_mysql.so"
+task copyLinuxX64(type: Copy) {
+	from "$rootDir/lib/target/x86_64-unknown-linux-gnu/release/libjdbd.so"
 	into "$buildDir/resources/main/x86_64/linux"
 }
 
-task copyMysqlWindowsX64(type: Copy) {
-    from "$rootDir/libs/jdbd_mysql/target/x86_64-pc-windows-gnu/release/libjdbd_mysql.dll"
+task copyWindowsX64(type: Copy) {
+    from "$rootDir/libs/target/x86_64-pc-windows-gnu/release/libjdbd.dll"
 	into "$buildDir/resources/main/x86_64/windows"
 }
 
 task nativeLibraries(type: Zip) {
-    dependsOn('copyMysqlLinuxX64')
-    dependsOn('copyMysqlWindowsX64')
+    dependsOn('copyLinuxX64')
+    dependsOn('copyWindowsX64')
 }
 
 task javadocJar(type: Jar) {

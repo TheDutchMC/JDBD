@@ -2,7 +2,7 @@ use jni::JNIEnv;
 use jni::objects::{JObject, JString};
 use jni::sys::{jlong, jint};
 use mysql::{Pool, Params};
-use super::set_error;
+use crate::jni::util::set_error;
 use mysql::prelude::Queryable;
 
 /**
