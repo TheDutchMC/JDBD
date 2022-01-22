@@ -2,9 +2,11 @@ package dev.array21.jdbd.drivers;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.Arrays;
 
 import dev.array21.jdbd.DatabaseDriver;
 import dev.array21.jdbd.datatypes.PreparedStatement;
+import dev.array21.jdbd.datatypes.SqlParameter;
 import dev.array21.jdbd.datatypes.SqlRow;
 import dev.array21.jdbd.exceptions.DriverUnloadedException;
 import dev.array21.jdbd.exceptions.SqlException;
@@ -67,7 +69,7 @@ public class MysqlDriver implements DatabaseDriver {
 		
 		this.ptr = initializeNative();
 		if(this.ptr == 0) {
-			throw new RuntimeException("Failed to load driver: " + String.valueOf(this.errorBuffer));
+			throw new RuntimeException("Failed to load driver: " + this.errorBuffer);
 		}
 		
 		this.ptrValid = true;
@@ -115,7 +117,7 @@ public class MysqlDriver implements DatabaseDriver {
 			throw new UnboundPreparedStatementException("Not all paramaters are bound");
 		}
 		
-		SqlRow[] resultSet = this.queryNative(this.ptr, statement.getStmt());
+		SqlRow[] resultSet = this.queryNative(this.ptr, statement.getStmt(), statement.getParameters());
 		if(resultSet == null) {
 			String buffer = this.errorBuffer;
 			this.errorBuffer = "";
@@ -140,8 +142,8 @@ public class MysqlDriver implements DatabaseDriver {
 		if(!statement.allBound()) {
 			throw new UnboundPreparedStatementException("Not all paramaters are bound");
 		}
-		
-		int status = this.executeNative(this.ptr, statement.getStmt());
+
+		int status = this.executeNative(this.ptr, statement.getStmt(), statement.getParameters());
 		if(status != 0) {
 			String buffer = this.errorBuffer;
 			this.errorBuffer = "";
@@ -172,18 +174,18 @@ public class MysqlDriver implements DatabaseDriver {
 	/**
 	 * Execute a statement
 	 * @param ptr The heap pointer to where the mysql connection pool is stored
-	 * @param preparedStatement The statement to execute, with all params bound
+	 * @param rawStmt The statement to execute, with all params bound
 	 * @return -1 if an error occurred. 0 if everything is OK.
 	 */
-	private synchronized native int executeNative(long ptr, String preparedStatement);
+	private synchronized native int executeNative(long ptr, String rawStmt, SqlParameter[] parameters);
 	
 	/**
 	 * Query the database
 	 * @param ptr The heap pointer to where the mysql connection pool is stored
-	 * @param preparedStatement The statement to query with, with all params bound
+	 * @param rawStmt The statement to query with, with all params bound
 	 * @return The data returned by the database, or null if an error occurred
 	 */
-	private synchronized native SqlRow[] queryNative(long ptr, String preparedStatement);
+	private synchronized native SqlRow[] queryNative(long ptr, String rawStmt, SqlParameter[] parameters);
 	
 	/**
 	 * Unload the driver. This will destory the mysql connection pool and free it's memory

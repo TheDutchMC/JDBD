@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import dev.array21.jdbd.DatabaseDriver;
 import dev.array21.jdbd.datatypes.PreparedStatement;
+import dev.array21.jdbd.datatypes.SqlParameter;
 import dev.array21.jdbd.datatypes.SqlRow;
 import dev.array21.jdbd.exceptions.DriverUnloadedException;
 import dev.array21.jdbd.exceptions.SqlException;
@@ -59,7 +60,7 @@ public class PostgreSqlDriver implements DatabaseDriver {
 	 * @throws IOException When saving the native library failed
 	 * @throws UnsatisfiedLinkError When loading the native library failed
 	 * @throws UnsupportedOperatingSystemException When the current operating system is unsupported
-	 * @throws RuntimeException When {@link PostgreDriver#initializeNative()} returns an error
+	 * @throws RuntimeException When {@link PostgreSqlDriver#initializeNative()} returns an error
 	 */
 	public void loadDriver() throws IOException {
 		DriverManager.loadLibrary();
@@ -100,27 +101,41 @@ public class PostgreSqlDriver implements DatabaseDriver {
 	}
 	
 	@Override
-	public SqlRow[] query(PreparedStatement statement) throws SqlException {
+	public synchronized SqlRow[] query(PreparedStatement statement) throws SqlException {
 		checkValid();
 		
 		if(!statement.allBound()) {
 			throw new UnboundPreparedStatementException("Not all paramaters are bound");
 		}
 		
-		return null;
-	}
+		SqlRow[] resultSet = this.queryNative(this.ptr, statement.getStmt(), statement.getParameters());
+		if(resultSet == null) {
+			String buffer = this.errorBuffer;
+			this.errorBuffer = "";
+			throw new SqlException(buffer);
+		}
+
+		return resultSet;
+	};
 
 	@Override
-	public void execute(PreparedStatement statement) throws SqlException {
+	public synchronized void execute(PreparedStatement statement) throws SqlException {
 		checkValid();
 		
 		if(!statement.allBound()) {
 			throw new UnboundPreparedStatementException("Not all paramaters are bound");
-		}		
+		}
+
+		int status = this.executeNative(this.ptr, statement.getStmt(), statement.getParameters());
+		if(status != 0) {
+			String buffer = this.errorBuffer;
+			this.errorBuffer = "";
+			throw new SqlException(buffer);
+		}
 	}
 
 	@Override
-	public void unload() {
+	public synchronized void unload() {
 		checkValid();
 		this.ptrValid = false;
 		this.unloadNative(this.ptr);
@@ -139,7 +154,7 @@ public class PostgreSqlDriver implements DatabaseDriver {
 	 * @param preparedStatement The statement to execute, with all params bound
 	 * @return -1 if an error occurred. 0 if everything is OK.
 	 */
-	private synchronized native int executeNative(long ptr, String preparedStatement);
+	private synchronized native int executeNative(long ptr, String preparedStatement, SqlParameter[] parameter);
 	
 	/**
 	 * Query the database
@@ -147,7 +162,7 @@ public class PostgreSqlDriver implements DatabaseDriver {
 	 * @param preparedStatement The statement to query with, with all params bound
 	 * @return The data returned by the database, or null if an error occurred
 	 */
-	private synchronized native SqlRow[] queryNative(long ptr, String preparedStatement);
+	private synchronized native SqlRow[] queryNative(long ptr, String preparedStatement, SqlParameter[] parameters);
 	
 	/**
 	 * Unload the driver. This will destory the postgres connection pool and free it's memory

@@ -1,56 +1,55 @@
 package dev.array21.jdbd.datatypes;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.charset.StandardCharsets;
 
 public class PreparedStatement {
 	private String stmt;
-	private int[] bindingOffsets;
-	private int lenDelta;
-	
+	private SqlParameter[] parameters;
+
 	public PreparedStatement(String stmt) {
 		this.stmt = stmt;
-		
-		List<Integer> bindingOffsets = new ArrayList<>();
-		char[] stmtChars = stmt.toCharArray();
-		for(int i = 0; i < stmtChars.length; i++) {
-			char c = stmtChars[i];
-			if(c == '?') {
-				bindingOffsets.add(i);
-			}
-		}
-		
-		this.bindingOffsets = bindingOffsets.stream().mapToInt(i->i).toArray();
+		this.parameters = new SqlParameter[(int) stmt.chars().filter(x -> x == '?').count()];
 	}
-	
+
+	public void bind(int pos, String val) {
+		parameters[pos] = new SqlParameter(val.getBytes(StandardCharsets.UTF_8));
+	}
+
+	public void bind(int pos, byte[] val) {
+		parameters[pos] = new SqlParameter(val);
+	}
+
+	public void bind(int pos, int val) {
+		parameters[pos] = new SqlParameter((long) val);
+	}
+
+	public void bind(int pos, float val) {
+		parameters[pos] = new SqlParameter(val);
+	}
+
+	public void bind(int pos, double val) {
+		parameters[pos] = new SqlParameter(val);
+	}
+
+	public void bind(int pos, boolean val) {
+		parameters[pos] = new SqlParameter(val ? 1L : 0L);
+	}
+
 	public String getStmt() {
 		return this.stmt;
 	}
-	
-	public PreparedStatement bind(int pos, String str) {
-		int bindOffset = this.bindingOffsets[pos] + this.lenDelta;
-		this.lenDelta += str.length() -1;
-		
-		String beforeBind = this.stmt.substring(0, bindOffset);
-		String afterBind = this.stmt.substring(bindOffset + 1, this.stmt.length());
-		
-		this.stmt = beforeBind + str + afterBind;
-		return this;
+
+	public SqlParameter[] getParameters() {
+		return this.parameters;
 	}
-	
+
 	public boolean allBound() {
-		return !this.stmt.contains("?");
-	}
-	
-	public PreparedStatement bind(int pos, int i) {
-		return this.bind(pos, String.valueOf(i));
-	}
-	
-	public PreparedStatement bind(int pos, boolean b) {
-		return this.bind(pos, String.valueOf(b));
-	}
-	
-	public PreparedStatement bind(int pos, long l) {
-		return this.bind(pos, String.valueOf(l));
+		for(SqlParameter x : this.parameters) {
+			if(x == null) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 }

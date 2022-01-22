@@ -7,7 +7,7 @@ plugins {
 }
 
 group = 'dev.array21'
-version = '1.0.0'
+version = '1.1.0'
 
 sourceCompatibility = 1.11
 
@@ -75,18 +75,18 @@ publishing {
 		    	artifactId = 'jdbd'
 		    	packaging = 'jar'
 		    	description = 'Java Database Driver'
-		    	url = 'https://github.com/TheDutchMC/JDBD'
+		    	url = 'https://github.com/TobiasDeBruijn/JDBD'
 			
 				scm {
-					connection = 'scm:git:git://github.com/TheDutchMC/JDBD.git'
-					developerConnection = 'scm:git:ssh://github.com/TheDutchMC/JDBD.git'
-					url = 'https://github.com/TheDutchMC/JDBD'
+					connection = 'scm:git:git://github.com/TobiasDeBruijn/JDBD.git'
+					developerConnection = 'scm:git:ssh://github.com/TobiasDeBruijn/JDBD.git'
+					url = 'https://github.com/TobiasDeBruijn/JDBD'
 				}
 		
 		    	licenses {
 		      		license {
 		        		name = 'MIT Licence'
-		        		url = 'https://github.com/TheDutchMC/JDBD/blob/master/LICENSE'
+		        		url = 'https://github.com/TobiasDeBruijn/JDBD/blob/master/LICENSE'
 		      		}
 	    		}
 		
